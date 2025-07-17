@@ -1,18 +1,31 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import ImageGenerator from '@/components/ImageGenerator';
 
-// 顶部卡片图片列表（如需更换图片，将新图片放入 public/generated/，并修改下方路径即可）
-const topImages = [
-  '/generated/image_1751111949119.png',
-  '/generated/image_1751114352177.png',
-  '/generated/image_1751114781595.png',
-  '/generated/image_1751115138002.png',
-  '/generated/image_1751115443458.png',
-];
+// 删除原有的 topImages 数组
+// 新增：动态获取 generated 目录下图片
+const getRandomImages = (arr: string[], n: number) => {
+  const shuffled = arr.slice().sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, n);
+};
 
 export default function Home() {
+  const [topImages, setTopImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/list-images?dir=generated')
+      .then(res => res.json())
+      .then((data: string[]) => {
+        // 只保留图片文件
+        const images = data.filter((file) => /\.(png|jpe?g|webp|gif)$/i.test(file));
+        // 拼接路径
+        const fullPaths = images.map(img => `/generated/${img}`);
+        setTopImages(getRandomImages(fullPaths, 5));
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#fff8f0] flex flex-col">
       {/* 顶部橙色提示条 */}
@@ -25,7 +38,7 @@ export default function Home() {
         <div className="absolute left-6 top-4 flex items-center select-none">
           <span className="font-extrabold text-lg text-[#22223b] tracking-tight">Motion<span className="text-[#ff7e36]">Pic</span></span>
         </div>
-        {/* Top card images (replace in public/generated/ and topImages array) */}
+        {/* Top card images (随机显示 generated 目录下的图片) */}
         <div className="flex gap-2 md:gap-4 mb-6 mt-2 relative z-10">
           {topImages.map((src, i) => (
             <div
